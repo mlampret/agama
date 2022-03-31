@@ -18,7 +18,7 @@
         <% if (stash('header') // 1) { %>
             <div id="header">
                 <div id="logo">
-                    <a href="<%= url_for('home') %>"><img src="/agama_logo.svg"></a>
+                    <a href="<%= url_for('home') %>"><img src="/logo.svg"></a>
                 </div>
                 <div id="main_menu" class="menu">
                     <a href="<%= url_for('datasets') %>">Datasets</a>

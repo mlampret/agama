@@ -130,6 +130,7 @@ sub csv_string {
 
 sub column_names {
     my ($self) = @_;
+    # assumes we are grouping, not sure we want this
     (undef, my @names) = map { $_ } $self->matrix->[0]->@*;
     return @names;
 }

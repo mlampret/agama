@@ -9,9 +9,9 @@
 <% my $editor = param('editor') || ($query ? $query->editor : 'sql_composer'); %>
 
 <% if ($editor eq 'sql_raw') { %>
-    <%= include 'dataset/editor_sql_raw', query => $query %>
+    <%= include 'editor/sql_raw', query => $query %>
 <% } else { %>
-    <%= include 'dataset/editor_sql_composer', query => $query %>
+    <%= include 'editor/sql_composer', query => $query %>
 <% } %>
 
 <div class="spacer-40"></div>
