@@ -1,0 +1,64 @@
+% my $title = $dataset->name;
+% layout 'default';
+% title $title;
+
+<h1><a href="<%= url_for('manage_datasets') %>">←</a> <%= $title %></h1>
+
+<div class="box">
+    <h2>Roles</h2>
+    <% my $dataset_roles = $dataset->roles; %>
+    <%
+        for my $role (
+            sort {
+                (grep { $_->id == $b->id } @$dataset_roles)
+                <=>
+                (grep { $_->id == $a->id } @$dataset_roles)                
+            }
+            sort { $a->name cmp $b->name }
+            $all_roles->@*
+        ) {
+    %>
+        <% my $attached = grep { $_->id == $role->id } @$dataset_roles; %>
+        <div class="role <%= $attached ? 'attached' : '' %>" data-role_id="<%= $role->id %>">
+            <div class="check spacer-15 inline-block">✔ </div>
+            <a><%= $role->name %></a>
+        </div>
+    <% } %>
+</div>
+
+<div class="spacer-20"></div>
+
+<div class="box">
+    <h2>Users with access</h2>
+    <div id="users_with_access">
+        <%= include 'manage/dataset/users' %>
+    </div>
+</div>
+
+<div class="spacer-20"></div>
+
+<script>
+    $('.role').click(function () {
+        var role_div = $(this);
+        var role_id  = role_div.data('role_id');
+        var attached = role_div.hasClass('attached');
+
+        var url_role_add_dataset = "<%= url_for('role_add_dataset', role_id => 'role_id')->query(dataset_id => $dataset->id) %>";
+        url_role_add_dataset = url_role_add_dataset.replace("role_id", role_id);
+
+        var url_role_remove_dataset = "<%= url_for('role_remove_dataset', role_id => 'role_id')->query(dataset_id => $dataset->id) %>";
+        url_role_remove_dataset = url_role_remove_dataset.replace("role_id", role_id);
+
+        if (attached) {
+            $.get(url_role_remove_dataset, function (data) {
+                role_div.removeClass('attached');
+                $("#users_with_access").html(data.users_html);
+            });
+        } else {
+            $.get(url_role_add_dataset, function (data) {
+                role_div.addClass('attached');
+                $("#users_with_access").html(data.users_html);
+            });
+        }
+    });
+</script>

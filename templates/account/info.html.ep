@@ -1,0 +1,24 @@
+% my $title = 'My account';
+% layout 'default';
+% title $title;
+
+<h1><%= $title %></h1>
+
+<div class="box">
+    <% if ($user->picture_url) { %>
+        <img class="right user_picture" src="<%= $user->picture_url %>">
+    <% } %>
+    First name: <%= $user->first_name %>
+    <br>
+    Last name: <%= $user->last_name %>
+    <br>
+    Email: <%= $user->email %>
+    <br>
+</div>
+
+<div class="spacer-20"></div>
+
+<div class="box">
+    <a href="<%= url_for('logout') %>">Logout</a>
+</div>
+

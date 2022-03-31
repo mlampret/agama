@@ -1,0 +1,16 @@
+<div class="result box">
+    <div class="header">
+        <span class="h2">Result</span>
+    </div>
+
+    <div class="output">
+        An error occurred while trying to run the following statement:
+        <div class="code"><%= $statement || '<no statement>' %></div>
+        <% if ($self->app->mode eq 'development' || $self->user->can_develop) { %>
+            <div class="spacer-20"></div>
+            Reason
+            <div class="code"><%= $error %></div>
+        <% } %>
+    </div>
+</div>
+

@@ -1,0 +1,93 @@
+% my $title = $user->first_name.' '.$user->last_name;
+% layout 'default';
+% title $title;
+
+<h1><a href="<%= url_for($self->cookie('back_to') || 'manage_users') %>">←</a> <%= $title %></h1>
+
+<div class="box">
+    <h2>Account</h2>
+
+    <% if ($self->user->id == $user->id) {%>
+        <p class="color-warning">
+            You are editing your own account.
+            Once you remove admin permissions, you won't be able to add them back.
+        </p>
+    <% } %>
+
+    <form method="post" action="<%= url_for('manage_user_update') %>">
+        <select name="status" onchange="this.form.submit()">
+            <option value="enabled">Enabled</option>
+            <option value="disabled" <% if ($user->is_disabled) { %>selected<% }%>>Disabled</option>
+        </select>
+        <div class="spacer-20"></div>
+        <select name="type" onchange="this.form.submit()">
+            <option value="explorer">Explorer</option>
+            <option value="developer" <%= $user->is_developer ? 'selected' : '' %>>Developer</option>
+            <option value="admin" <%= $user->is_admin ? 'selected' : '' %>>Admin</option>
+        </select>
+        <input type="hidden" name="back_to" value="<%= stash('back_to') %>">
+    </form>
+    <div class="spacer-20"></div>
+    Last active: <%= $user->date_last_active %>
+</div>
+
+<div class="spacer-20"></div>
+
+<div class="box">
+    <h2>Roles</h2>
+
+    <% my $user_roles = $user->roles; %>
+    <%
+        for my $role (
+            sort {
+                (grep { $_->id == $b->id } @$user_roles)
+                <=>
+                (grep { $_->id == $a->id } @$user_roles)
+            }
+            $all_roles->@*
+        ) { 
+    %>
+        <% my $attached = grep { $_->id == $role->id } @$user_roles; %>
+        <div class="role <%= $attached ? 'attached' : '' %>" data-role_id="<%= $role->id %>">
+            <div class="check spacer-15 inline-block">✔ </div>
+            <a><%= $role->name %></a>
+        </div>
+    <% } %>
+</div>
+
+<div class="spacer-20"></div>
+
+<div class="box">
+    <h2>Accessible datasets</h2>
+    <div id="accessible_datasets">
+        <%= include 'manage/user/datasets' %>
+    </div>
+</div>
+
+<div class="spacer-20"></div>
+
+<script>
+    $('.role').click(function () {
+        var role_div = $(this);
+        var role_id  = role_div.data('role_id');
+        var attached = role_div.hasClass('attached');
+
+        var url_role_add_user = "<%= url_for('role_add_user', role_id => 'role_id')->query(user_id => $user->id) %>";
+        url_role_add_user = url_role_add_user.replace("role_id", role_id);
+
+        var url_role_remove_user = "<%= url_for('role_remove_user', role_id => 'role_id')->query(user_id => $user->id) %>";
+        url_role_remove_user = url_role_remove_user.replace("role_id", role_id);
+
+        if (attached) {
+            $.get(url_role_remove_user, function (data) {
+                role_div.removeClass('attached');
+                $("#accessible_datasets").html(data.datasets_html);
+            });
+        } else {
+            $.get(url_role_add_user, function (data) {
+                role_div.addClass('attached');
+                $("#accessible_datasets").html(data.datasets_html);
+            });
+        }
+    });
+</script>

@@ -1,0 +1,42 @@
+% my $title = 'Manage roles';
+% layout 'default';
+% title $title;
+
+<%= include 'manage/nav' %>
+
+<h1><%= $title %></h1>
+
+<div class="box">
+    <h2>Add role</h2>
+    <form method="post" action="<%= url_for('manage_add_role') %>">
+        <input type="text" name="name" placeholder="Role name" style="width: 300px;" required>
+        <input class="btn" type="submit" value="Create role">
+    </form>
+</div>
+
+<div class="spacer-20"></div>
+
+<% if (! $roles || scalar $roles->@* == 0) { %>
+    <div class="box">
+        No roles found
+    </div>
+<% } %>
+
+<% for my $role ($roles->@*) { %>
+    <div class="box">
+        <h2><a href="<%= url_for('manage_role', role_id => $role->id); %>">
+            <%= $role->name %>
+        </a></h2>
+        <% my $datasets = join ', ', map { $_->name } ($role->datasets->@*); %>
+        <% if ($datasets) { %>
+            Datasets: <%= $datasets %>
+        <% } else { %>
+            <div class="color-warning">No datasets assigned to this role</div>
+        <% } %>
+        <% unless ($role->users->@*) { %>
+            <div class="color-warning">No users assigned to this role</div>
+        <% } %>
+    </div>
+    <div class="spacer-20"></div>
+<% } %>
+

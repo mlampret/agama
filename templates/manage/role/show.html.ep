@@ -1,0 +1,111 @@
+% my $title = $role->name;
+% layout 'default';
+% title $title;
+
+<h1><a href="<%= url_for('manage_roles') %>">←</a> <%= $title %></h1>
+
+<div class="box">
+    <h2>Users</h2>
+    <% my $role_users = $role->users; %>
+    <%
+        for my $user (
+            sort { $b->is_enabled <=> $a->is_enabled }
+            sort { 
+                (grep { $_->id == $b->id } @$role_users)
+                <=> 
+                (grep { $_->id == $a->id } @$role_users)
+            }
+            $all_users->@*        
+        ) { 
+    %>
+        <% my $attached = grep { $_->id == $user->id } @$role_users; %>
+        <div class="user <%= $attached ? 'attached' : '' %>" data-user_id="<%= $user->id %>">
+            <div class="check spacer-15 inline-block">✔ </div>
+            <a class="<%= $user->is_disabled ? 'disabled' : '' %>"><%= $user->full_name %></a>
+        </div>
+    <% } %>
+</div>
+
+<div class="spacer-20"></div>
+
+<div class="box">
+    <h2>Datasets</h2>
+    <% my $role_datasets = $role->datasets; %>
+    <%
+        for my $dataset (
+            sort {
+                (grep { $_->id == $b->id } @$role_datasets)
+                <=>
+                (grep { $_->id == $a->id } @$role_datasets)
+            }
+            sort { $a->name cmp $b->name }
+            $all_datasets->@*
+        ) {
+    %>
+        <% my $attached = grep { $_->id == $dataset->id } @$role_datasets; %>
+        <div class="dataset <%= $attached ? 'attached' : '' %>" data-dataset_id="<%= $dataset->id %>">
+            <div class="check spacer-15 inline-block">✔ </div>
+            <a><%= $dataset->name %></a>
+        </div>
+    <% } %>
+</div>
+
+<div class="spacer-20"></div>
+
+<script>
+    $('.dataset').click(function () {
+        var dataset_div	= $(this);
+        var dataset_id  = dataset_div.data('dataset_id');
+        var attached    = dataset_div.hasClass('attached');
+
+        var url_role_add_dataset = "<%= url_for('role_add_dataset', role_id => $role->id)->query(dataset_id => 'replace_dataset_id') %>";
+        url_role_add_dataset = url_role_add_dataset.replace("replace_dataset_id", dataset_id);
+
+        var url_role_remove_dataset = "<%= url_for('role_remove_dataset', role_id => $role->id)->query(dataset_id => 'replace_dataset_id') %>";
+        url_role_remove_dataset = url_role_remove_dataset.replace("replace_dataset_id", dataset_id);
+
+        if (attached) {
+            $.get(url_role_remove_dataset, function (data) {
+                dataset_div.removeClass('attached');
+            });
+        } else {
+            $.get(url_role_add_dataset, function (data) {
+                dataset_div.addClass('attached');
+            });
+        }
+    });
+
+    $('.user').click(function () {
+        var user_div = $(this);
+        var user_id  = user_div.data('user_id');
+        var attached = user_div.hasClass('attached');
+
+        var url_role_add_user = "<%= url_for('role_add_user', role_id => $role->id)->query(user_id => 'replace_user_id') %>";
+        url_role_add_user = url_role_add_user.replace("replace_user_id", user_id);
+
+        var url_role_remove_user = "<%= url_for('role_remove_user', role_id => $role->id)->query(user_id => 'replace_user_id') %>";
+        url_role_remove_user = url_role_remove_user.replace("replace_user_id", user_id);
+
+        if (attached) {
+            $.get(url_role_remove_user, function (data) {
+                user_div.removeClass('attached');
+            });
+        } else {
+            $.get(url_role_add_user, function (data) {
+                user_div.addClass('attached');
+            });
+        }
+    });
+</script>
+
+<div class="box">
+    <h2>Delete role</h2>
+    <% if ($role->users->@*) { %>
+        Before this role can be deleted any assigned users
+        need to be unassigned.
+    <% } else { %>
+        <a class="btn" href="<%= url_for('role_delete', role_id => $role->id ) %>">Delete</a>
+    <% } %>
+</div>
+
+

@@ -1,0 +1,292 @@
+<%# my $query   = stash('query'); %>
+<% my $dataset = stash('dataset') || $query->dataset; %>
+
+<div class="box">
+    <h2>Select</h2>
+    <select id="topic" name="topic">
+        <% for my $topic ($dataset->topics->@*) { %>
+            <% next if $topic->status eq 'hidden' && (!$query || $topic->id != $query->topic->id); %>
+            <option value="<%= $topic->id %>"><%= $topic->name %></option>
+        <% } %>
+    </select>
+
+    <div class="spacer-20"></div>
+
+    <div>
+        <span class="h2">Filters</span>
+        <span id="filter_operator_toggle" class="pointer show-tooltip" onclick="$('.filter_operator').toggle()" title="Advanced filter options">≡</span>
+    </div>
+
+    <div id="filters"><%# placeholder for filters added by JS %></div>
+
+    <div>
+        <a id="btn_add_filter" class="pointer">Add filter</a>
+    </div>
+
+    <div class="spacer-20"></div>
+
+    <% if (scalar($dataset->groupings->@*)) { %>
+        <h2>Grouping</h2>
+
+        <div id="groupings"><%# placeholder for groupings added by JS %></div>
+
+        <div id="wrp_add_grouping">
+            <div class="spacer-5"></div>
+            <a id="btn_add_grouping" class="pointer">Add grouping</a>
+        </div>
+    <% } %>
+
+    <div class="spacer-20"></div>
+
+    <input id="btn_exec" class="btn" type="button" value="Run">
+</div>
+
+<%
+    my $advanced_filter_options = 0;
+    for my $filter ($query ? $query->filters->@* : ()) {
+        $advanced_filter_options = 1 if $filter->operator ne 'and';
+    }
+%>
+
+<div class="hidden">
+    <div id="filter_template">
+        <select class="filter_operator" name="filter_operator"
+        <% if (!$advanced_filter_options) { %> style="display: none;" <% } %>
+        >
+            <option value="and">Require</option>
+            <option value="and_not">Exclude</option>
+        </select>
+        <select class="filter_select">
+            <% for my $filter ($dataset->filters->@*) { %>
+                <%
+                    my @query_filters   = $query ? $query->filters->@* : ();
+                    my $is_query_filter = grep { $_->id == $filter->id } @query_filters;
+                    next if $filter->status eq 'hidden' && !$is_query_filter;
+                %>
+                <option value="<%= $filter->id %>" data-filter-id="<%= $filter->id %>" data-type="<%= $filter->type %>">
+                    <%= $filter->name %>
+                </option>
+            <% } %>
+        </select>
+        <div class="filter_params inline-block"></div>
+        <a class="btn_remove_filter pointer">&times;</a>
+    </div>
+
+    <% for my $filter ($dataset->filters->@*) { %>
+        <div id="filter_id_<%= $filter->id %>_options">
+            <%= include 'dataset/filter/options', filter => $filter %>
+        </div>
+    <% } %>
+
+    <div id="grouping_template">
+        <select class="grouping_select">
+            <% for my $grouping ($dataset->groupings->@*) { %>
+                <%
+                    my @query_groupings   = $query ? $query->groupings->@* : ();
+                    my $is_query_grouping = grep { $_->id == $grouping->id } @query_groupings;
+                    next if $grouping->status eq 'hidden' && !$is_query_grouping;
+                %>
+                <option value="<%= $grouping->id %>"><%= $grouping->name %></option>
+            <% } %>
+        </select>
+        <a class="btn_remove_grouping pointer">&times;</a>
+    </div>
+</div>
+
+<script>
+    var filter_no   = 0;
+    var grouping_no = 0;
+
+    function add_filter (callback) {
+        filter_no++;
+
+        var new_filter = $('#filter_template').clone();
+        new_filter.appendTo('#filters');
+        new_filter.removeAttr('id');
+        new_filter.addClass('filter');
+        filter_id = "filter_"+filter_no;
+        new_filter.attr("id", filter_id);
+
+        new_filter.find('.filter_select').bind('change', function () {
+            var select = $(this);
+            var option = select.find(':selected');
+            var type   = option.data('type');
+            var filter_id = option.val();
+            var params = select.parent().find('.filter_params');
+            var current_no = select.attr('id').replace(/^filter_/, '').replace(/_id/, '');
+
+            if (type == 'enum' || type == 'date_range') {
+                params.html($('#filter_id_'+filter_id+'_options').clone());
+                var param_count = 1;
+                params.find('select,input').each(function () {
+                    var input = $(this);
+                    if (input.hasClass("filter_ignore")) {
+                        return;
+                    }
+                    input.attr('id', 'filter_'+current_no+'_param_'+param_count++);
+                });
+                if (type == 'date_range') {
+                    params.find('select').each(function() {
+                        date_range_filter_change(this);
+                    });
+                }
+            }
+            else if (type == 'text') {
+                params.html(
+                    '<input type="text" placeholder="" id="filter_'+current_no+'_param_1">'
+                );
+            }
+            else {
+                params.html('');
+            }
+
+            app.tooltip.init('#'+select.parent().attr('id'));
+        });
+        new_filter.find('.filter_select').attr('id', 'filter_'+filter_no+'_id');
+        new_filter.find('.filter_select').trigger('change');
+
+        new_filter.find('.filter_operator').attr('id', 'filter_'+filter_no+'_operator');
+
+        new_filter.find('.btn_remove_filter').click(function () {
+            $(this).parent().remove();
+        });
+
+        if (callback != null) callback();
+    };
+
+    function add_grouping (callback) {
+        if (grouping_count() >= 2) return;
+
+        grouping_no = grouping_no + 1;
+        var new_grouping = $('#grouping_template').clone();
+        new_grouping.appendTo('#groupings');
+        new_grouping.removeAttr('id');
+        new_grouping.addClass('grouping');
+        new_grouping.find('.btn_remove_grouping').click(function () {
+            $(this).parent().remove();
+            grouping_count();
+        });
+        new_grouping.find('select').attr('id', 'grouping_'+grouping_no+'_id');
+        new_grouping.find('select').trigger('change');
+        grouping_count();
+
+        if (callback != null) callback();
+    };
+
+    function grouping_count () {
+        var count = $('#groupings .grouping').length;
+        if (count >= 2) {
+            $('#wrp_add_grouping').hide();
+        } else {
+            $('#wrp_add_grouping').show();
+        }
+        return count;
+    };
+    
+    function get_query_params() {
+        var query_params = {};
+        query_params['active_tab'] = $('.tabs .tab-trigger.active').data('tab');
+        query_params['topic_id']   = $('#topic').val();
+
+        $('#filters .filter').each(function () {
+            var filter = $(this);
+            var filter_id_name  = filter.find('.filter_select').attr('id');
+            var filter_id_value = filter.find('.filter_select').val();
+            var filter_op_name  = filter.find('.filter_operator').attr('id');
+            var filter_op_value = filter.find('.filter_operator').val();
+            query_params[filter_id_name] = filter_id_value;
+            query_params[filter_op_name] = filter_op_value;
+            filter.find('.filter_params input, .filter_params select').each(function () {
+                var input = $(this);
+                if (input.hasClass("filter_ignore")) {
+                    return;
+                }
+                query_params[input.attr('id')] = input.val();
+            });
+        });
+
+        $('#groupings .grouping').each(function () {
+            var grouping = $(this);
+            var grouping_id_name  = grouping.find('select').attr('id');
+            var grouping_id_value = grouping.find('select').val();
+            query_params[grouping_id_name] = grouping_id_value;
+            grouping.find('.grouping_params input, .grouping_params select').each(function () {
+                var input = $(this);
+                query_params[input.attr('id')] = input.val();
+            });
+        });
+
+        return query_params;
+    };
+
+    $('#btn_add_filter').click(function () { add_filter() });
+    $('#btn_add_grouping').click(function () { add_grouping() });
+    $('#btn_exec').click(function () { exec_query() });
+
+    <%# load topic %>
+    <% if ($query) { %>
+        var topic_sel = $('#topic');
+        topic_sel.children('[value="<%= $query->topic->id %>"]').attr("selected",true);
+    <% } %>
+
+    <%# load filters %>
+    <% my $filter_no = 0; %>
+    <% my @filters = $query
+        ? $query->filters->@*
+        : grep { $_->status eq 'required' || $_->status eq 'default' } $dataset->filters->@*;
+    %>
+
+    <% for my $filter (@filters) { %>
+        add_filter(function () {
+            var filter_sel = $('#filter_<%= ++$filter_no %> .filter_select');
+            var filter_op = filter_sel.parent().find('.filter_operator');
+
+            filter_sel.children('[value="<%= $filter->id %>"]').attr("selected",true);
+            filter_sel.trigger('change');
+
+            <% if ($filter->operator eq 'and_not') { %>
+                filter_op.children('[value="<%= $filter->operator %>"]').attr("selected",true);
+                filter_op.trigger('click');
+            <% } %>
+
+            <% if ($filter->status eq 'required') { %>
+                filter_sel.attr("onmousedown", "(function(e){ e.preventDefault(); })(event, this)");
+                filter_sel.addClass("show-tooltip");
+                filter_sel.addClass("disabled");
+                filter_sel.attr("title", "Required filter");
+
+                filter_op.attr("onmousedown", "(function(e){ e.preventDefault(); })(event, this)");
+                filter_op.addClass("show-tooltip");
+                filter_op.addClass("disabled");
+                filter_op.attr("title", "Required filter");
+
+                filter_sel.parent().find('.btn_remove_filter').hide();
+            <% } %>
+
+            <% my $param_count = 0; %>
+            <% for my $param ($filter->params->@*) { %>
+                param_sel = $('#filter_<%= $filter_no %>_param_<%= ++$param_count %>');
+                param_sel.children('[value="<%= $param %>"]').attr("selected",true);
+                param_sel.val('<%= $param %>');
+            <% } %>
+            <% if ($filter->type eq 'date_range') { %>
+                date_range_filter_init($('#filter_<%= $filter_no %> .filter_ignore'));
+            <% } %>
+        });
+    <% } %>
+
+    <%# load groupings %>
+    <% my $grouping_no = 0; %>
+    <% my @groupings = $query
+        ? $query->groupings->@*
+        : grep { $_->status eq 'default' } $dataset->groupings->@*;
+    %>
+
+    <% for my $grouping (@groupings) { %>
+        add_grouping(function () {
+            var grouping_sel = $('#grouping_<%= ++$grouping_no %>_id');
+            grouping_sel.children('[value="<%= $grouping->id %>"]').attr("selected",true);
+        });
+    <% } %>
+
+</script>

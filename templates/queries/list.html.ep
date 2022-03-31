@@ -1,0 +1,45 @@
+% my $title = param('search') ? 'Query: '.param('search') : 'Saved queries';
+% layout 'default';
+% title $title;
+
+<div class="tabs right">
+    <div class="searchbox-alt <%= param('search') ? 'hidden' : '' %>">
+        <a class="<%= param('search') ? '' : 'color-text' %>" href="<%= url_for('queries') %>">Latest</a>
+        |
+        <a class="<%= param('search') ? 'color-text' : '' %>" onclick="show_search()">Search</a>
+    </div>
+    <form class="searchbox <%= param('search') ? '' : 'hidden' %>" action="<%= url_for('queries') %>">
+        <input name="search" value="<%= param('search') %>" type="text" placeholder="Search ...">
+        <i class="close fas fa-times" onclick="hide_search()"></i>
+    </form>
+</div>
+
+<script>
+    function show_search() {
+        $('.searchbox-alt').addClass('hidden');
+        $('.searchbox').removeClass('hidden');
+        $('.searchbox input').focus();
+    }
+    function hide_search() {
+        $('.searchbox-alt').removeClass('hidden');
+        $('.searchbox').addClass('hidden');
+        $('#main .box').css('visibility', 'hidden');
+        window.location.href = '<%= url_for('queries') %>';
+    }
+</script>
+
+<h1><%= $title %></h1>
+
+<% if (! $queries || scalar $queries->@* == 0) { %>
+    <div class="box">
+        No queries found
+    </div>
+<% } %>
+
+<% for my $query ($queries->@*) { %>
+    <%= include 'query/result',
+        query   => $query,
+        options => { active_tab => 'chart' },
+    %>
+    <div class="spacer-40"></div>
+<% } %>

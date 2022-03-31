@@ -1,0 +1,23 @@
+% layout 'default', header => 0, main_class => 'narrow';
+
+<div class="spacer-50"></div>
+
+<img id="logo" src="/logo.svg">
+
+<div class="spacer-20"></div>
+
+<div class="box">
+    <div class="spacer-20"></div>
+
+    <b>500 Internal Server Error</b>
+    
+    <div class="spacer-20"></div>
+
+    Sorry! Our servers seem to have probelms.
+
+    <div class="spacer-20"></div>
+
+    Please try again later or try your luck with <a href="<%= url_for('home') %>">the homepage</a>.
+
+    <div class="spacer-20"></div>
+</div>

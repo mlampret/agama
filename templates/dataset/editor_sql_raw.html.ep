@@ -1,0 +1,72 @@
+<div id="editor_sql_raw" class="box">
+    <h2>Query</h2>
+    <% my $can_develop = $self->user->can_develop ? 1 : 0; %>
+    <pre class="<%= $can_develop ? 'hidden' : '' %>"><code><%= $query ? $query->params->{sql_statement} : '' %></code></pre>
+    <div class="<%= $can_develop ? '' : 'hidden' %>">
+        <% my $datasets = Agama::Model::Datasets->new->get(user => $self->user); %>
+        <% if ($can_develop && @$datasets) { %>
+            <div>
+                <select id="dataset_id" class="show-tooltip" onchange="change_dataset()" title="Users with access to the selected dataset will be able to see this query if saved">
+                    <option value=''>Please select ...</option>
+                    <% for my $ds (@$datasets) { %>
+                        <%
+                            my $selected = 
+                                $query &&
+                                (
+                                    $ds->id == (stash('dataset_id') // '0') ||
+                                    $ds->id == ($query ? $query->dataset->id : '')
+                                )   
+                                ? 'selected'
+                                : '';                    
+                        %>
+                        <option value="<%= $ds->id %>" <%= $selected %>><%= $ds->name %></option>
+                    <% } %>
+                </select>
+                <span class="error_dataset hidden color-error">← please select dataset</span>
+                <span class="error_statement hidden color-error">↓ statement missing</span>
+            </div>
+            <div class="spacer-10"></div>
+            <textarea id="sql_statement" style="padding: 5px 10px; width: 100%; height: 300px; font-size: 1.3em;" placeholder="SELECT field, COUNT(*) AS cnt&#10;FROM table&#10;GROUP by field&#10;LIMIT 1000"><%= $query ? $query->params->{sql_statement} : '' %></textarea>
+        <% } %>
+        <input type="hidden" id="query_id" value="<%= $query ? $query->id : '' %>">
+    </div>
+    <div class="spacer-10"></div>
+    <input id="btn_exec" class="btn" type="button" value="Run">
+</div>
+
+<script>
+    function change_dataset() {
+        var dataset_id = $('#dataset_id').val();
+        var dataset_name = $('#dataset_id option:selected').text();
+        $('h1').text(dataset_name);
+        $('#last_result').html('');
+    };
+
+    function get_query_params() {
+        return {
+            editor: 'sql_raw',
+            sql_statement: $("#sql_statement").val(),
+            query_id: $("#query_id").val(),
+        };
+    };
+
+    $('#btn_exec').click(function () {
+        if ($('#dataset_id').val() == '') {
+            $('#editor_sql_raw .error_dataset').removeClass('hidden');
+            $('#editor_sql_raw .error_statement').addClass('hidden');
+        } else if ($('#sql_statement').val() == '') {
+            $('#editor_sql_raw .error_dataset').addClass('hidden');
+            $('#editor_sql_raw .error_statement').removeClass('hidden');
+        } else {
+            $('#editor_sql_raw .error_dataset').addClass('hidden');
+            $('#editor_sql_raw .error_statement').addClass('hidden');
+            exec_query();
+        }
+    });
+    
+    <% unless ($query) { %>
+        $('h1').html('Custom query');
+    <% } %>
+
+</script>
+

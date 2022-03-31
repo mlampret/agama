@@ -1,0 +1,30 @@
+% my $title = 'My queries';
+% layout 'default';
+% title $title;
+
+<div class="right" style="margin-top: 12px">
+    <a class="<%= current_route() eq 'my_history' ? 'color-text' : '' %>" href="<%= url_for("my_history") %>">History</a>
+    |
+    <a class="<%= current_route() eq 'my_queries' ? 'color-text' : '' %>" href="<%= url_for("my_queries") %>">Saved</a>
+    <% if ($self->user->can_develop) { %>
+        |
+        <% my ($first_dataset_id) = $self->user->allowed_dataset_ids; %>
+        <a class="" href="<%= url_for("dataset_query", dataset_id => $first_dataset_id)->query(editor => 'sql_raw') %>">Custom query</a>
+    <% } %>
+</div>
+
+<h1><%= $title %></h1>
+
+<% if (! $queries || scalar $queries->@* == 0) { %>
+    <div class="box">
+        No queries found. 
+    </div>
+<% } %>
+
+<% for my $query ($queries->@*) { %>
+    <%= include 'query/result',
+        query   => $query,
+        options => { active_tab => 'chart' },
+    %>
+    <div class="spacer-40"></div>
+<% } %>

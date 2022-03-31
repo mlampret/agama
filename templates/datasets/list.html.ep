@@ -1,0 +1,20 @@
+% my $title = 'Datasets';
+% layout 'default';
+% title $title;
+
+<h1><%= $title %></h1>
+
+<% if (! $datasets || scalar $datasets->@* == 0) { %>
+    <div class="box">
+        No datasets found. Please contact administor to give you access.
+    </div>
+<% } %>
+
+<% for my $dataset ($datasets->@*) { %>
+    <div class="box">
+        <h2><a href="<%= url_for('dataset_query', dataset_id => $dataset->id); %>"><%= $dataset->name %></a></h2>
+        <%= $dataset->description %>
+    </div>
+    <div class="spacer-20"></div>
+<% } %>
+

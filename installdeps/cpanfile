@@ -1,0 +1,11 @@
+requires 'Class::Singleton';
+requires 'DBI';
+requires 'DBD::mysql';
+requires 'Data::Dumper';
+requires 'JSON';
+requires 'List::MoreUtils';
+requires 'Mojolicious', '== 9.19';
+requires 'Mojolicious::Plugin::OAuth2','==2.02';
+requires 'Mouse';
+requires 'Text::CSV';
+requires 'Mozilla::CA';

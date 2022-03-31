@@ -1,0 +1,41 @@
+<% my $result = stash('result') || $query->last_result; %>
+
+<table id="datatable-<%= $result->id %>">
+    <thead>
+        <tr>
+            <% my $row = $result->matrix->[0]; %>
+            <% for my $cell (@$row) { %>
+                <td class="show-tooltip" title="Click to sort by this column"><%= $cell %></td>
+            <% } %>
+        </tr>
+    </thead>
+    <tbody>
+        <% my @matrix = $result->matrix->@*; %>
+        <% shift @matrix; %>
+        <% for my $row (@matrix) { %>
+            <tr>
+                <% for my $cell (@$row) { %>
+                    <td>
+                        <% if (!defined $cell) { %>
+                            <span class="null">NULL</span>
+                        <% } elsif ($cell eq '') {%>
+                             <span class="empty" title="empty string">-</span>
+                        <% } else {%>
+                            <%= $cell %>
+                        <% } %>
+                    </td>
+                <% } %>
+            </tr>
+        <% } %>
+    </tbody>
+</table>
+
+<script>
+    $('#datatable-<%= $result->id %>').DataTable({
+        autoWidth: false,
+        searching: false,
+        paging: false,
+        info: false,
+        order: [],
+    });
+</script>

@@ -1,0 +1,95 @@
+% layout 'default';
+% title  'Query';
+
+<% my $query   = stash('query'); %>
+<% my $dataset = stash('dataset') || $query->dataset; %>
+
+<h1><%= $dataset->name %></h1>
+
+<% my $editor = param('editor') || ($query ? $query->editor : 'sql_composer'); %>
+
+<% if ($editor eq 'sql_raw') { %>
+    <%= include 'dataset/editor_sql_raw', query => $query %>
+<% } else { %>
+    <%= include 'dataset/editor_sql_composer', query => $query %>
+<% } %>
+
+<div class="spacer-40"></div>
+
+<div id="results" <% if (!$query) { %>class="hidden"<% } %>>
+    <div id="last_result">
+        <% if ($query) { %>
+            <%= include 'query/result',
+                query   => $query,
+                options => {
+                    mode       => 'advanced',
+                    active_tab => $query ? 'chart' : 'matrix'
+                }
+            %>
+        <% } %>
+    </div>
+</div>
+
+<div class="spacer-40"></div>
+
+<%
+    my $advanced_filter_options = 0;
+    for my $filter ($query ? $query->filters->@* : ()) {
+        $advanced_filter_options = 1 if $filter->operator ne 'and';
+    }
+%>
+
+<script>
+    function exec_query () {
+        $('#results').removeClass('hidden');
+        if ($('#last_result .output').length) {
+            $('#last_result .output').html('Loading...');
+        } else {
+            $('#last_result').html('Loading...');
+        }
+
+        var query_params = get_query_params();
+       
+        var dataset_id = '<%= $dataset->id %>';
+
+        var editor_dataset_id = $('#dataset_id').val();
+
+        if (editor_dataset_id != undefined && editor_dataset_id != '') {
+            dataset_id = editor_dataset_id;
+        }
+
+        var url = '<%= url_for('dataset_exec', dataset_id => 'dataset_id') %>';
+        url = url.replace('dataset_id', dataset_id);
+
+        $.get(url, query_params)
+            .done(function(response) {
+                query = response.query;
+
+                var active_tab = $('#results .tabs .tab-trigger.active').data('tab');
+
+                $('#last_result').html(response.result_html);
+
+                $('#last_result .tabs [data-tab="' + active_tab + '"]').trigger('click');
+
+                window.history.pushState('data', 'Query', response.query_url);
+
+            })
+            .fail(function () {
+                if ($('#last_result .output').length) {
+                    $('#last_result .output').html('Error');
+                } else {
+                    $('#last_result').html('Error');
+                }
+            });
+    };
+
+    $(document).ready(function () {
+        app.page.set_min_height();
+
+        // handle back button push state issues
+        $(window).on("popstate", function (e) {
+            location.reload();
+        });
+    });
+
+</script>

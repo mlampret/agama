@@ -1,0 +1,42 @@
+<% my $result = stash('result') || $query->last_result; %>
+
+<pre><code><%= $result->statement %></code></pre>
+
+<div class="spacer-20"></div>
+
+<% if ($query->explain) { %>
+    Execution plan
+    <% for my $row ($query->explain->@*) { %>
+        <div class="code">
+            Table: <%= $row->{table} %>
+            <br>
+            Possible keys: <%= $row->{possible_keys} %>
+            <br>
+            Key: <span class="color-success"><%= $row->{key} %></span>
+            <br>
+            Key len: <%= $row->{key_len} %>
+            <br>
+            Rows:
+                <% if ($row->{rows} && $row->{rows} > 1_000_000 && ! $row->{key}) { %>
+                    <span class="color-error"><%= $row->{rows} %></span>
+                <% } elsif ($row->{rows} && $row->{rows} > 2_000_000) { %>
+                    <span class="color-warning"><%= $row->{rows} %></span>
+                <% } else { %>
+                    <%= $row->{rows} %>
+                <% } %>
+        </div>
+        <div class="spacer-10"></div>
+    <% } %>
+    <div class="spacer-10"></div>
+<% } %>
+
+Execution time
+<div class="code">
+    <%= sprintf '%.3f', $result->exec_time || 0 %> seconds
+</div>
+
+<script>
+    document.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightBlock(block);
+    });
+</script>

@@ -1,0 +1,32 @@
+% my $title = 'Manage admins';
+% layout 'default';
+% title $title;
+% $self->cookie('back_to', 'manage_admins');
+
+<%= include 'manage/nav' %>
+
+<h1><%= $title %></h1>
+
+<% if (! @$users) { %>
+    <div class="box">
+        No users found.
+    </div>
+<% } else { %>
+
+    <div class="box">
+        <%
+            for my $user (
+                sort { $b->is_enabled <=> $a->is_enabled } 
+                sort { $b->is_admin   <=> $a->is_admin   } 
+                @$users
+            ) {
+        %>
+            <div class="user <%= $user->is_admin ? 'attached' : '' %>" data-user_id="<%= $user->id %>">
+                <div class="check spacer-15 inline-block">✔ </div>
+                <a class="<%= $user->is_disabled ? 'disabled' : ''%>" href="<%= url_for('manage_user', user_id => $user->id) %>"><%= $user->full_name %></a>
+            </div>
+        <% } %>
+    </div>
+    <div class="spacer-20"></div>
+
+<% } %>

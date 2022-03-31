@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html id="page-<%= current_route %>">
+    <head>
+        <title>Agama</title>
+        <link rel="stylesheet/less" type="text/css" href="<%= $self->version_dir->path %>/style.less" />
+        <script src="/less.min.js"></script>
+        <link rel="stylesheet" href="/highlight.min.css">
+        <script src="/highlight.min.js"></script>
+        <script src="/jquery-3.4.1.min.js"></script>
+        <script src="/chart.min.js"></script>
+        <script src="/chroma.min.js"></script>
+        <script src="<%= $self->version_dir->path %>/app.js"></script>
+        <link href="/fontawesome/css/all.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="/datatables.min.css">
+        <script src="/datatables.min.js"></script>
+    </head>
+    <body>
+        <% if (stash('header') // 1) { %>
+            <div id="header">
+                <div id="logo">
+                    <a href="<%= url_for('home') %>"><img src="/agama_logo.svg"></a>
+                </div>
+                <div id="main_menu" class="menu">
+                    <a href="<%= url_for('datasets') %>">Datasets</a>
+                    <a href="<%= url_for('queries') %>">Saved queries</a>
+                    <a href="<%= url_for('my_history') %>">My queries</a>
+                </div>
+                <div id="account_menu" class="menu">
+                    <% if ($self->user->is_admin) { %>
+                        <a href="<%= url_for('manage_users') %>">Manage</a>
+                    <% } %>
+                    <a href="/account">My account</a>
+                </div>
+            </div>
+        <% } %>
+
+        <div id="main" class="<%= stash('main_class') // '' %>">
+            <%= content %>
+        </div>
+        
+        <div id="footer">
+            © 2020 Flatshare Ltd. All rights reserved.            
+        </div>
+
+        <script>
+            app.tabs.init('body');
+            app.tooltip.init();
+        </script>        
+
+    </body>
+</html>

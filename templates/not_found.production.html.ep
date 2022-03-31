@@ -1,0 +1,23 @@
+% layout 'default', header => 0, main_class => 'narrow';
+
+<div class="spacer-50"></div>
+
+<img id="logo" src="/logo.svg">
+
+<div class="spacer-20"></div>
+
+<div class="box">
+    <div class="spacer-20"></div>
+
+    <b>404 Page not found</b>
+    
+    <div class="spacer-20"></div>
+
+    The page you have requested can't be found.
+
+    <div class="spacer-20"></div>
+
+    You may want to head back to <a href="<%= url_for('home') %>">the homepage</a>.
+
+    <div class="spacer-20"></div>
+</div>

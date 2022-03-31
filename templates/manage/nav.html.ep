@@ -1,0 +1,15 @@
+<div class="right" style="margin-top: 12px">
+    <a class="<%= current_route() eq 'manage_users' ? 'color-text' : '' %>" href="<%= url_for("manage_users") %>">Users</a>
+    |
+    <a class="<%= current_route() eq 'manage_datasets' ? 'color-text' : '' %>" href="<%= url_for("manage_datasets") %>">Datasets</a>
+    |
+    <a class="<%= current_route() eq 'manage_roles' ? 'color-text' : '' %>" href="<%= url_for("manage_roles") %>">Roles</a>
+
+    &nbsp;
+    •
+    &nbsp;
+
+    <a class="<%= current_route() eq 'manage_admins' ? 'color-text' : '' %>" href="<%= url_for("manage_admins") %>">Admins</a>
+    |
+    <a class="<%= current_route() eq 'manage_developers' ? 'color-text' : '' %>" href="<%= url_for("manage_developers") %>">Developers</a>
+</div>

@@ -1,0 +1,9 @@
+<% unless (scalar $user->datasets->@*) { %>
+    <span class="color-text-light">No datasets</span>
+<% } %>
+
+<% for my $ds ($user->datasets->@*) { %>
+    <div>
+        <%= $ds->name %>
+    </div>
+<% } %>

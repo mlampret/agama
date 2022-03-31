@@ -1,0 +1,39 @@
+{
+    # Passphrase used to sign cookies / random string that is hard to guess
+    secrets => ['YOUR_SECRET'],
+
+    # Production webserver config, has no effect in dev env
+    hypnotoad => {
+        listen  => ['http://*:80'],
+        proxy   => 0,
+        workers => 20,
+    },
+
+    # DB of this app, used to store queries, results...
+    db => [
+        'DBI:mysql:database=YOUR_DB_NAME;host=YOUR_DB_HOST;port=YOUR_DB_PORT',
+        'YOUR_DB_USERNAME',
+        'YOUR_DB_PASSWORD',
+        {mysql_enable_utf8mb4 => 1},
+    ],
+
+    # DBs from where stats are obtained / queries are run against
+    dataset_dbs => {
+        main => [
+            'DBI:mysql:database=YOUR_FIRST_DATASET_DB_NAME;host=YOUR_FIRST_DATASET_DB_HOST;port=YOUR_FIRST_DATASET_DB_PORT',
+            'YOUR_FIRST_DATASET_DB_USERNAME',
+            'YOUR_FIRST_DATASET_DB_PASSWORD',
+        ],
+    },
+    session => {
+        expiration => 5256000,
+    },
+    query_exec_timeout => 30,
+    autocreate_users => 1,
+    apis => {
+        google => {
+            key    => 'YOUR_GOOGLE_OAUTH2_KEY',
+            secret => 'YOUR_GOOGLE_OAUTH2_SECRET',
+        },
+    },
+}

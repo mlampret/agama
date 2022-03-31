@@ -1,0 +1,62 @@
+
+<% if ($filter->type eq 'enum') { %>
+    <select>
+        <% for my $option ($filter->options_as_array->@*) { %>
+            <option value="<%= $option->{value} %>"><%= $option->{name} %></option>
+        <% } %>
+    </select>
+<% } elsif ($filter->type eq 'date_range') { %>
+    <div class="inline-block">
+        <select class="filter_ignore" onchange="date_range_filter_change(this)">
+            <option value="now-5m,now">Last 5 min</option>
+            <option value="now-30m,now">Last 30 min</option>
+            <option value="now-1h,now">Last hour</option>
+            <option value="now-12h,now">Last 12 hours</option>
+            <option value="now/d,now">Today</option>
+            <option value="now-1d/d,now-1d/d">Yesterday</option>
+            <option value="now-24h,now">Last 24 hours</option>
+            <option value="now-7d/d,now">Last 7 days</option>
+            <option value="now-14d/d,now">Last 14 days</option>
+            <option value="now-1M/d,now">Last month</option>
+            <option value="now-2M/d,now">Last 2 months</option>
+            <option value="now/y,now">Last year</option>
+            <option value="now/y,now">Last 2 years</option>
+            <option value="now-1y/d,now">Year-to-date</option>
+            <option value="now-1y/y,now-1y/y">Previous year</option>
+            <option disabled>———————</option>
+            <option value="">Specific range</option>
+        </select>
+        <div class="inline-block date-range-absolute" style="display: none">
+            <input class="date-range-input date-range-start show-tooltip" type="text" value="<%= $filter->options_as_array->[1]->{value} %>" placeholder="2022-01-01" title="Results will include start date">
+            and
+            <input class="date-range-input date-range-end show-tooltip"   type="text" value="<%= $filter->options_as_array->[2]->{value} %>" placeholder="2022-12-31" title="Results will include end date">
+        </div>
+    </div>
+    <script>
+        function date_range_filter_change(el) {
+            var values = $(el).val().split(",");
+            var inputs = $(el).parent().find('.date-range-absolute input');
+
+            if (values.length === 2) {
+                $(inputs[0]).val(values[0]);
+                $(inputs[1]).val(values[1]);
+                $(el).parent().find('.date-range-absolute').hide();
+            } else {
+                $(inputs[0]).val('');
+                $(inputs[1]).val('');
+                $(el).parent().find('.date-range-absolute').show();
+            }
+        }
+        function date_range_filter_init(el) {
+            var inputs = $(el).parent().find('.date-range-absolute input');
+            var sel_val = $(inputs[0]).val()+','+$(inputs[1]).val();
+            sel_opt = $(el).children('[value="'+sel_val+'"]');
+            if (sel_opt.length > 0) {
+                sel_opt.attr("selected",true);
+            } else {
+                 $(el).children('[value=""]').attr("selected",true);
+                 $(el).parent().find('.date-range-absolute').show();
+            }
+        }
+    </script>
+<% } %>

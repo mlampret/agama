@@ -1,0 +1,81 @@
+<%
+    my $chart_id = 'chart_'.$query->id.'_';
+    my $result   = stash('result') || $query->last_result;
+    my $options  = stash('options') || {mode => ''};
+%>
+
+<div id="wrp_<%= $chart_id %>" class="wrp_chart">
+    <canvas id="<%= $chart_id %>"></canvas>
+</div>
+
+<% if ($options->{mode} eq 'advanced') { %>
+    <div class="spacer-20"></div>
+    ⓘ Click on the labels above the chart to hide categories
+<% } %>
+
+<script>
+    var chart_colors = app.chart.chroma_scale.colors(
+        <%= $result->group_count == 1 ? 2 : scalar($result->matrix->@*) - 1 %>
+    );
+
+    var ctx = document.getElementById('<%= $chart_id %>').getContext('2d');
+
+    Chart.defaults.global.animation.duration = 0;
+
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        },
+        data: {
+            <% if ($result->group_count == 1) { %>
+                labels: [ <%== join ', ', map { qq{"$_"} } $result->row_names_for_print %> ],
+                datasets: [
+                    {
+                        label: '<%= $result->matrix->[0]->[0] %>',
+                        backgroundColor: chart_colors[0],
+                        data: [
+                            <% (undef, my @values) = map { $_->[1] } $result->matrix->@*; %>
+                            <%= join ', ', map { $_ =~ s/[,\%]//g; $_ } @values %>
+                        ],
+                    },
+                ]
+            <% } elsif ($result->group_count == 2) { %>
+                labels: [ <%== join ', ', map { qq{"$_"} } $result->column_names_for_print %> ],
+                datasets: [
+                    <% for (my $row_count = 1; $row_count < scalar($result->matrix->@*); $row_count++) { %>
+                            {
+                                label: '<%= $result->matrix->[$row_count]->[0] %>',
+                                backgroundColor: chart_colors[<%= $row_count - 1 %>],
+                                data: [
+                                    <% (undef, my @values) = $result->matrix->[$row_count]->@*; %>
+                                    <%= join ', ', map { $_ //=''; $_ =~ s/[,\%]//g; $_ } @values %>
+                                ],
+                            },
+                    <% } %>
+                ]
+            <% } %>
+        }
+    }); 
+    
+    <% if ($result->group_count < 1) { %>
+        var text = '<%= $result->matrix->[1]->[0] %>';
+        <% if (scalar($result->matrix->[1]->@*) > 2) { %>
+            text = '<%= scalar($result->matrix->[1]->@*) %> rows';
+        <% } %>
+        $('#wrp_<%= $chart_id %>').append(
+            '<div class="chart_text">' +
+            '<%= $result->matrix->[1]->[0] %>' +
+            '</div>'
+        );
+    <% } %>   
+</script>
+
+

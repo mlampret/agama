@@ -1,0 +1,14 @@
+<% unless (scalar $dataset->users->@*) { %>
+    <span class="color-text-light">No user have access to this dataset</span>
+<% } %>
+
+<%
+    for my $user (
+        sort { $b->is_enabled <=> $a->is_enabled }
+        $dataset->users->@*
+    ) {
+%>
+    <div class="<%= $user->is_disabled ? 'disabled' : '' %>">
+        <%= $user->full_name %>
+    </div>
+<% } %>

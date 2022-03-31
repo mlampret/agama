@@ -1,0 +1,152 @@
+<% my $query   = stash('query') || undef; %>
+<% my $result  = stash('result') || $query ? $query->last_result : undef; %>
+<% my $options = stash('options') || {}; %>
+<% $options->{mode} //= ''; %>
+<% my $result_div_id = join '-', 'query', ($query && $query->id ? $query->id : ''), 'result', ($result && $result->id ? $result->id : '') ; %>
+
+<div id="<%= $result_div_id %>" class="result box">
+    <%
+        my $active_tab = $options->{active_tab} || 'matrix';
+        if (current_route() eq 'query') {
+            $active_tab = 'matrix' if $result && $result->column_names >= 3;
+        } 
+    %>
+
+    <div class="header">
+        <% if ($result && $options->{mode} eq 'advanced') { %>
+            <div class="tabs right">
+                <a class="tab-trigger tab-group-result pointer <%= $active_tab eq 'matrix' ? 'active' : ''%>" data-tab-group="tab-group-result" data-tab="matrix">Table</a>
+                <span class="color-text-light">|</span>
+                <a class="tab-trigger tab-group-result pointer <%= $active_tab eq 'chart' ? 'active' : ''%>" data-tab-group="tab-group-result" data-tab="chart">Chart</a>
+                <span class="color-text-light">|</span>
+                <a href="<%= url_for('result_csv', result_id => $result->id) %>">CSV</a>
+                <span class="color-text-light">|</span>
+                <a class="tab-trigger tab-group-result pointer <%= $active_tab eq 'sql' ? 'active' : ''%>" data-tab-group="tab-group-result" data-tab="statement">SQL</a>
+                &nbsp;
+                •
+                &nbsp;
+                <a id="btn_save">Save</a>
+                <span class="color-text-light">|</span>
+                <a id="btn_remove">Remove</a>
+            </div>
+        <% } %>
+        <span class="h2">
+            <% if ($options->{mode} eq 'advanced') { %>
+                <%= $query && $query->name ? $query->name : 'Result' %>
+            <% } else { %>
+                <a href="<%= url_for('query', query_id => $query->id) %>"><%= $query && $query->name ? $query->name : $query && $query->dataset ? $query->dataset->name : '?' %></a>
+            <% } %>
+        </span>
+        <span class="details nowrap color-text-light show-tooltip" title="<% if ($result && $result->user) { %><%= $result->user->first_name %> <%= $result->user->last_name %> @ <%= $result->date_created %> <% } %>">
+            <% if ($result && $result->date_created) { %>
+                @
+                <% my $result_date = $result->date_created // ''; %>
+                <% $result_date =~ s/\s.+$//; %>
+                <%= $result_date %>
+            <% } %>
+        </span>
+    </div>
+
+    <div class="clear"></div>
+
+    <% if ($result) { # && scalar $query->results->@* > 0) { %>
+        <div id="matrix" class="tab-content tab-group-result <%= $active_tab eq 'matrix' ? 'active' : '' %>">
+            <div class="output"><%= $query ? include 'query/result/matrix', query => $query, options => $options : '' %></div>
+        </div>
+
+        <div id="chart" class="tab-content tab-group-result <%= $active_tab eq 'chart' ? 'active' : '' %>">
+            <div class="output"><%= $query ? include 'query/result/chart', query => $query, options => $options : '' %></div>
+        </div>
+
+        <% if ($result && $options->{mode} eq 'advanced') { %>            
+            <div id="statement" class="tab-content tab-group-result <%= $active_tab eq 'statement' ? 'active' : '' %>">
+                <div class="output"><%= $query ? include 'query/result/statement', query => $query, options => $options : '' %></div>
+            </div>
+        <% } %>
+    <% } else { %>
+        <div class="no_results">Not run yet</div>
+    <% } %>
+</div>
+
+<div id="popup-save-query" class="popup">
+    <div class="close" onclick="$(this).closest('.popup').popup('hide');"><i class="fas fa-times"></i></div>
+    Save query as ...
+    <div class="spacer-10"></div>
+    <input class="query-name" type="text" value="" placeholder="e.g. London offered ads by postcode area" onkeydown="if (event.keyCode == 13) save_query();">
+    <br>
+    <div class="spacer-10"></div>
+    <input class="btn" type="submit" value="Save" onclick="save_query()">
+</div>
+
+<div id="popup-remove-query" class="popup">
+    <div class="close" onclick="$(this).closest('.popup').popup('hide');"><i class="fas fa-times"></i></div>
+    Are you sure you want to remove this query?
+    <div class="spacer-10"></div>
+    <input class="btn" type="submit" value="Remove" onclick="remove_query()">
+    &nbsp;&nbsp;
+    <a onclick="$(this).closest('.popup').popup('hide');">Cancel</a>
+</div>
+
+<div id="popup-query-not-saved" class="popup">
+    <div class="close" onclick="$(this).closest('.popup').popup('hide');"><i class="fas fa-times"></i></div>
+    This query is not saved.
+    <div class="spacer-10"></div>
+    <input class="btn" type="submit" value="OK" onclick="$(this).closest('.popup').popup('hide');">
+</div>
+
+<script>
+    var query =
+    <% if ($query) { %>
+        {"id": <%= $query->id %>, "name": "<%= $query->name %>"};
+    <% } else { %>
+        {};
+    <% } %>
+
+    app.tabs.init('#<%= $result_div_id %>');
+    $('#btn_save').click(function () { show_save_query_popup() });
+    $('#btn_remove').click(function () { show_remove_query_popup() });
+
+    function show_save_query_popup () {
+        $('#popup-save-query .query-name').val(query.name);
+        $('#popup-save-query').popup('show');
+    }
+
+    function save_query () {
+        var new_name = $('#popup-save-query .query-name').val();
+        var post_data = { "name": new_name };
+        $.post('<%= url_for('save_query', query_id => 'query_id') %>'.replace('query_id', query.id), post_data)
+            .done(function(response) {
+                query.name = new_name;
+                $('#<%= $result_div_id %> .h2').html(new_name);
+                $('#popup-save-query').popup('hide');
+            })
+            .fail(function () {
+                $('#popup-save-query').popup('hide');
+                alert('Error: failed to save query');
+            });
+    }
+
+    function show_remove_query_popup () {
+        if (query.name != '') {
+            $('#popup-remove-query').popup('show');
+        } else {
+            $('#popup-query-not-saved').popup('show');
+        }
+    }
+
+    function remove_query () {
+        var new_name = $('#popup-remove-query .query-name').val();
+        var post_data = { "name": new_name };
+        $.post('<%= url_for('remove_query', query_id => 'query_id') %>'.replace('query_id', query.id), post_data)
+            .done(function(response) {
+                query.name = '';
+                $('#<%= $result_div_id %> .h2').html('Result');
+                $('#popup-remove-query').popup('hide');
+                $('#last_result').html('');
+            })
+            .fail(function () {
+                $('#popup-remove-query').popup('hide');
+                alert('Error: failed to remove query');
+            });
+    }
+</script>
