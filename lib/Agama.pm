@@ -86,7 +86,7 @@ sub startup {
     # admin condition
     $r->add_condition(admin => sub {
         my ($route, $c) = @_;
-        return $c->user->is_admin;
+        return $c->user && $c->user->is_admin;
     });
 
     # Routes
