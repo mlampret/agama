@@ -81,7 +81,7 @@ sub options_as_array {
 
     my $result = [];
 
-    if ($self->type eq 'enum' || $self->type eq 'date_range') {
+    if ($self->type eq 'enum') {
         my $rows = $self->dbh_ds($self->dataset->database)->selectall_arrayref(
             $self->options,
             {Slice => {}},

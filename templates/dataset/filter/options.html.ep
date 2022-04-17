@@ -19,10 +19,10 @@
             <option value="now-14d/d,now">Last 14 days</option>
             <option value="now-1M/d,now">Last month</option>
             <option value="now-2M/d,now">Last 2 months</option>
-            <option value="now/y,now">Last year</option>
-            <option value="now/y,now">Last 2 years</option>
+            <option value="now/y,now">This year</option>
             <option value="now-1y/d,now">Year-to-date</option>
             <option value="now-1y/y,now-1y/y">Previous year</option>
+            <option value="now-2y,now">Last 2 years</option>
             <option disabled>———————</option>
             <option value="">Specific range</option>
         </select>
