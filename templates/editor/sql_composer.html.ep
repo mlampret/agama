@@ -3,42 +3,42 @@
 
 <div class="box">
     <h2>Select</h2>
-    <select id="topic" name="topic">
-        <% for my $topic ($dataset->topics->@*) { %>
-            <% next if $topic->status eq 'hidden' && (!$query || $topic->id != $query->topic->id); %>
-            <option value="<%= $topic->id %>"><%= $topic->name %></option>
-        <% } %>
-    </select>
+	<% if ($dataset->topics->@*) { %>
+	    <select id="topic" name="topic">
+    	    <% for my $topic ($dataset->topics->@*) { %>
+        	    <% next if $topic->status eq 'hidden' && (!$query || $topic->id != $query->topic->id); %>
+            	<option value="<%= $topic->id %>"><%= $topic->name %></option>
+	        <% } %>
+    	</select>
+	    <div class="spacer-20"></div>
+	<% } %>
 
-    <div class="spacer-20"></div>
-
-    <div>
-        <span class="h2">Filters</span>
-        <span id="filter_operator_toggle" class="pointer show-tooltip" onclick="$('.filter_operator').toggle()" title="Advanced filter options">≡</span>
-    </div>
-
-    <div id="filters"><%# placeholder for filters added by JS %></div>
-
-    <div>
-        <a id="btn_add_filter" class="pointer">Add filter</a>
-    </div>
-
-    <div class="spacer-20"></div>
+	<% if ($dataset->filters->@*) { %>
+        <div>
+            <span class="h2">Filters</span>
+            <span id="filter_operator_toggle" class="pointer show-tooltip" onclick="$('.filter_operator').toggle()" title="Advanced filter options">≡</span>
+        </div>
+        <div id="filters"><%# placeholder for filters added by JS %></div>
+        <div>
+            <a id="btn_add_filter" class="pointer">Add filter</a>
+        </div>
+        <div class="spacer-20"></div>
+	<% } %>
 
     <% if (scalar($dataset->groupings->@*)) { %>
         <h2>Grouping</h2>
-
         <div id="groupings"><%# placeholder for groupings added by JS %></div>
-
         <div id="wrp_add_grouping">
             <div class="spacer-5"></div>
             <a id="btn_add_grouping" class="pointer">Add grouping</a>
         </div>
+	    <div class="spacer-20"></div>
     <% } %>
-
-    <div class="spacer-20"></div>
-
-    <input id="btn_exec" class="btn" type="button" value="Run">
+	<% if ($dataset->topics->@*) { %>
+	    <input id="btn_exec" class="btn" type="button" value="Run">
+	<% } else { %>
+		This dataset doesn't have any topics set up.
+	<% } %>
 </div>
 
 <%
